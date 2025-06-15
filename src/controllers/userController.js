@@ -1,6 +1,31 @@
 const User = require('../models/User'); 
 const admin = require('../config/firebaseAdmin');
 
+async function createAdminIfNotExist() {
+  try {
+    const adminEmail = "vitalpetvef@uca.edu.sv";
+
+    let admin = await User.findOne({ email: adminEmail });
+
+    if (!admin) {
+      admin = new User({ 
+        firebaseUid: "FOV9n28Jlwf5m30Ojbv2qiS6jOU2", // el UID que encuentres o que tu admin tenga en Firebase
+        name: "Administrador",
+        email: adminEmail,
+        phone: "71092923",
+        role: "admin"
+      });
+
+      await admin.save();
+
+      console.log("Usuario administrador creado automáticamente.");
+    } else {
+      console.log("Usuario administrador ya existe.");
+    }
+  } catch (error) {
+    console.error("Error al crear el administrador.", error);
+  }
+}
 const register = async (req, res) => {
   try {
     const idToken = req.headers.authorization?.split('Bearer ')[1];
@@ -28,6 +53,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const idToken = req.headers.authorization?.split('Bearer ')[1];
+    console.log('ID Token recibido:', idToken);
     if (!idToken) return res.status(401).json({ message: 'Valor de autenticación ausente' });
 
     const decoded = await admin.auth().verifyIdToken(idToken);
@@ -47,32 +73,39 @@ const login = async (req, res) => {
   }
 };
 
-const updateUserRole = async (req, res) => {
+
+const changeUserRole = async (req, res) => {
+  const { id } = req.params;  // id del usuario a modificar
+  const { role } = req.body;  // nuevo rol
+
+  // Solo admin puede cambiar roles
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Acceso denegado. Solo administradores pueden cambiar roles.' });
+  }
+
+  // Validar rol permitido
+  const allowedRoles = ['admin', 'veterinario', 'cliente'];
+  if (!allowedRoles.includes(role)) {
+    return res.status(400).json({ message: 'Rol inválido.' });
+  }
+
   try {
-    const idToken = req.headers.authorization?.split('Bearer ')[1];
-    if (!idToken) return res.status(401).json({ message: 'Token no proporcionado' });
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { role },
+      { new: true }
+    );
 
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const requesterUid = decodedToken.uid;
-
-    const requester = await User.findOne({ firebaseUid: requesterUid });
-    if (!requester || requester.role !== 'admin') {
-      return res.status(403).json({ message: 'No autorizado' });
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
 
-    const { userId, newRole } = req.body;
-    const userToUpdate = await User.findById(userId);
-    if (!userToUpdate) return res.status(404).json({ message: 'Usuario no encontrado' });
-
-    userToUpdate.role = newRole;
-    await userToUpdate.save();
-
-    res.status(200).json({ message: 'Rol actualizado', user: userToUpdate });
+    res.status(200).json({ message: 'Rol actualizado correctamente.', user: updatedUser });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error actualizando rol' });
+    res.status(500).json({ message: 'Error al cambiar el rol del usuario', error: error.message });
   }
 };
+
 const getUser = async (req, res) => {
   try {
     const idToken = req.headers.authorization?.split('Bearer ')[1];
@@ -91,4 +124,4 @@ const getUser = async (req, res) => {
   }
 };
 
-module.exports = { register, login, updateUserRole, getUser };
+module.exports = { register, login, changeUserRole, getUser, createAdminIfNotExist };
