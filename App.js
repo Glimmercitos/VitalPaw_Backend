@@ -1,19 +1,33 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const userRoutes = require('./src/routes/userRoutes');
 const cors = require('cors');
+const userRoutes = require("./src/routes/userRoutes");
+const petRoutes = require("./src/routes/petRoutes");
+const appointmentRoutes = require("./src/routes/appointmentRoutes");
+const medicalRecordRoutes = require("./src/routes/medicalRecordRoutes");
+const { createAdminIfNotExist } = require("./src/controllers/userController");
 
 const app = express();
 
-app.use(cors());
+app.use(cors()); 
 app.use(express.json());
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB conectado'))
-  .catch(err => console.error('Error al conectar MongoDB:', err));
+  .then(async () => {
+    console.log("MongoDB conectado");
+
+    await createAdminIfNotExist();
+
+    console.log("Comienza el server.");
+
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+
+  })
+  .catch((err) => console.error("Error al conectar MongoDB:", err));
 
 app.use('/api/users', userRoutes);
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+app.use('/api/pets', petRoutes);
+app.use('/api/appointments', appointmentRoutes)
+app.use('/api/medicalRecords', medicalRecordRoutes);
