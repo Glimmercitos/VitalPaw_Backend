@@ -7,6 +7,8 @@ const petRoutes = require("./src/routes/petRoutes");
 const appointmentRoutes = require("./src/routes/appointmentRoutes");
 const medicalRecordRoutes = require("./src/routes/medicalRecordRoutes");
 const { createAdminIfNotExist } = require("./src/controllers/userController");
+const shopRoutes = require("./src/routes/shopRoutes")
+const seedProductsIfNeeded = require("./seedProducts")
 
 const app = express();
 
@@ -18,6 +20,8 @@ mongoose.connect(process.env.MONGO_URI)
     console.log("MongoDB conectado");
 
     await createAdminIfNotExist();
+
+    seedProductsIfNeeded();
 
     console.log("Comienza el server.");
 
@@ -31,3 +35,4 @@ app.use('/api/users', userRoutes);
 app.use('/api/pets', petRoutes);
 app.use('/api/appointments', appointmentRoutes)
 app.use('/api/medicalRecords', medicalRecordRoutes);
+app.use('/api/shop', shopRoutes);
