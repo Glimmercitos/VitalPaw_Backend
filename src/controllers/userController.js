@@ -12,7 +12,7 @@ async function createAdminIfNotExist() {
         firebaseUid: "FOV9n28Jlwf5m30Ojbv2qiS6jOU2", // el UID que encuentres o que tu admin tenga en Firebase
         name: "Administrador",
         email: adminEmail,
-        phone: "71092923",
+        gender: "Male",
         role: "admin"
       });
 
@@ -39,8 +39,8 @@ const register = async (req, res) => {
       return res.status(400).json({ message: 'Usuario ya registrado' });
     }
 
-    const { name, email, phone, role } = req.body;
-    user = new User({ firebaseUid, name, email, phone, role });
+    const { name, email, gender, role } = req.body;
+    user = new User({ firebaseUid, name, email, gender, role });
     await user.save();
 
     res.status(201).json({ message: 'Usuario registrado', user });
