@@ -260,6 +260,18 @@ const editVetAppointment = async (req, res) => {
         res.status(500).json({ message: "Error al actualizar la cita.", error: error.message });
     }
 };
+const getAppointmentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const appointment = await Appointment.findById(id)
+      .populate('owner', 'name email')
+      .populate('pet', 'name species breed age unitAge gender weight petImage');
+    if (!appointment) return res.status(404).json({ message: 'Cita no encontrada' });
+    res.status(200).json(appointment);
+  } catch (error) {
+    res.status(500).json({ message: 'Error interno', error: error.message });
+  }
+};
 
 module.exports = {
     createAppointmentByClient,
@@ -269,5 +281,6 @@ module.exports = {
     getAppointmentsForVet,
     deleteVetAppointmentById,
     editVetAppointment,
+    getAppointmentById,
 };
 

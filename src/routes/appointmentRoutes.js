@@ -11,6 +11,7 @@ router.delete('/delete/:id', verifyFirebaseToken, appointmentController.deleteAp
 router.get('/user/:userId', verifyFirebaseToken, appointmentController.getAppointmentsByUserId);
 
 router.get('/vet', verifyFirebaseToken, appointmentController.getAppointmentsForVet);
+router.get('/vet/:id', verifyFirebaseToken, appointmentController.getAppointmentById)
 router.delete('/vet/delete/:id', verifyFirebaseToken, appointmentController.deleteVetAppointmentById);
 router.put('/vet/edit/:id', verifyFirebaseToken, appointmentController.editVetAppointment);
 
