@@ -9,7 +9,7 @@ async function createAdminIfNotExist() {
 
     if (!admin) {
       admin = new User({ 
-        firebaseUid: "FOV9n28Jlwf5m30Ojbv2qiS6jOU2", // el UID que encuentres o que tu admin tenga en Firebase
+        firebaseUid: "9A6lYGE6zgN1fP6jK8xBJjs9Ofp1", // el UID que encuentres o que tu admin tenga en Firebase
         name: "Administrador",
         email: adminEmail,
         gender: "Male",
