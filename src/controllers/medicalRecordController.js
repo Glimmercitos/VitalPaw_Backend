@@ -85,4 +85,32 @@ const getMedicalRecords = async (req, res) => {
     }
 };
 
-module.exports = { addMedicalRecord, getMedicalRecords };
+const getMedicalRecordsByPetId = async (req, res) => {
+    try {
+        const idToken = req.headers.authorization?.split('Bearer ')[1];
+        if (!idToken) return res.status(401).json({ message: 'Valor de autenticación ausente' });
+
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const firebaseUid = decoded.uid;
+
+        const user = await User.findOne({ firebaseUid });
+        if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+
+        if (user.role !== 'veterinario') {
+            return res.status(403).json({ message: "Acceso denegado. Único rol: Veterinario." });
+        }
+
+        const { petId } = req.params;
+
+        const medicalRecords = await MedicalRecord.find({ pet: petId })
+            .populate('pet', 'name breed weight age unitAge gender species petImage')
+            .sort({ date: -1 });
+
+        res.status(200).json({ message: 'Expedientes de la mascota recuperados con éxito!', medicalRecords });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener los expedientes de la mascota!', error: error.message });
+    }
+};
+
+
+module.exports = { addMedicalRecord, getMedicalRecords, getMedicalRecordsByPetId };

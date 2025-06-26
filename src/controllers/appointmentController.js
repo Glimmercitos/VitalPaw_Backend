@@ -255,7 +255,18 @@ const editVetAppointment = async (req, res) => {
 
         await existing.save();
 
-        res.status(200).json({ message: "Cita actualizada correctamente.", appointment: existing });
+        const populatedAppointment = await Appointment.findById(existing._id)
+
+        .populate('owner', 'name email')
+        .populate({
+            path: 'pet',
+            select: 'name species breed age gender weight unitAge owner',
+            populate: { path: 'owner',
+            select: 'name email'
+            }
+        });
+
+        res.status(200).json({ message: "Cita actualizada correctamente.", appointment: populatedAppointment });
     } catch (error) {
         res.status(500).json({ message: "Error al actualizar la cita.", error: error.message });
     }

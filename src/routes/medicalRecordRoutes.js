@@ -8,4 +8,6 @@ router.post('/:id', verifyFirebaseToken, medicalRecordController.addMedicalRecor
 
 router.get('/get', verifyFirebaseToken, medicalRecordController.getMedicalRecords);
 
+router.get('/getPet/:petId', verifyFirebaseToken, medicalRecordController.getMedicalRecordsByPetId);
+
 module.exports = router;
