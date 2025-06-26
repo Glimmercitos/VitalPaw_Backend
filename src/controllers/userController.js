@@ -3,13 +3,13 @@ const admin = require('../config/firebaseAdmin');
 
 async function createAdminIfNotExist() {
   try {
-    const adminEmail = "vitalpetvef@uca.edu.sv";
+    const adminEmail = "vitalpetvef@gmail.com";
 
     let admin = await User.findOne({ email: adminEmail });
 
     if (!admin) {
       admin = new User({ 
-        firebaseUid: "9A6lYGE6zgN1fP6jK8xBJjs9Ofp1", // el UID que encuentres o que tu admin tenga en Firebase
+        firebaseUid: "LFx8JzZJgheD3MMbArE7KOH5QWW2", // el UID que encuentres o que tu admin tenga en Firebase
         name: "Administrador",
         email: adminEmail,
         gender: "Male",
