@@ -1,6 +1,8 @@
 const Pet = require("../models/Pet"); 
 const User = require("../models/User"); 
 const admin = require("../config/firebaseAdmin");
+const fs = require("fs");
+const cloudinary = require("../config/cloudinary");
 
 const getAllPets = async (req, res) => {
     try {
@@ -72,6 +74,19 @@ const createPet = async (req, res) => {
             return res.status(400).json({ message: "Faltan datos para crear la mascota." });
         }
 
+        let imageUrl = "";
+        let imagePublicId = "";
+        if (req.file) {
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                folder: "vitalpaw/pets",
+                public_id: `pet_${Date.now()}_${user._id}`,
+            });
+            imageUrl = result.secure_url;
+            imagePublicId = result.public_id;
+            fs.unlinkSync(req.file.path);
+        }
+
+
         const newPet = new Pet({ 
             name, 
             species, 
@@ -80,7 +95,9 @@ const createPet = async (req, res) => {
             age, 
             weight, 
             unitAge, 
-            owner: user._id 
+            owner: user._id,
+            imageUrl,
+            imagePublicId
         });
 
         await newPet.save();
@@ -114,6 +131,10 @@ const deletePet = async (req, res) => {
             return res.status(403).json({ message: "Acceso denegado." });
         }
 
+        if (pet.imagePublicId) {
+            await cloudinary.uploader.destroy(pet.imagePublicId);
+        }
+
         await Pet.findByIdAndDelete(req.params.id);
 
         res.status(200).json({ message: "Mascota eliminada correctamente." });
@@ -142,6 +163,10 @@ const deleteUserPet = async (req, res) => {
 
         if (pet.owner.toString() !== user._id.toString()) {
             return res.status(403).json({ message: "Acceso denegado." });
+        }
+
+        if (pet.imagePublicId) {
+            await cloudinary.uploader.destroy(pet.imagePublicId);
         }
 
         await Pet.findByIdAndDelete(req.params.id);
