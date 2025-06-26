@@ -103,7 +103,13 @@ const getMedicalRecordsByPetId = async (req, res) => {
         const { petId } = req.params;
 
         const medicalRecords = await MedicalRecord.find({ pet: petId })
-            .populate('pet', 'name breed weight age unitAge gender species petImage')
+            .populate({
+                path: 'pet',
+                populate: {
+                    path: 'owner',
+                    select: 'id role'
+                }
+            })
             .sort({ date: -1 });
 
         res.status(200).json({ message: 'Expedientes de la mascota recuperados con éxito!', medicalRecords });
@@ -112,5 +118,34 @@ const getMedicalRecordsByPetId = async (req, res) => {
     }
 };
 
+const getMedicalRecordById = async (req, res) => {
+    try {
+        const idToken = req.headers.authorization?.split('Bearer ')[1];
+        if (!idToken) return res.status(401).json({ message: 'Valor de autenticación ausente' });
 
-module.exports = { addMedicalRecord, getMedicalRecords, getMedicalRecordsByPetId };
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const firebaseUid = decoded.uid;
+
+        const user = await User.findOne({ firebaseUid });
+        if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+
+        if (user.role !== 'veterinario') {
+            return res.status(403).json({ message: "Acceso denegado. Único rol: Veterinario." });
+        }
+
+        const { petId, medicalRecordId } = req.params;
+
+        const medicalRecord = await MedicalRecord.findOne({ _id: medicalRecordId, pet: petId })
+            .populate('pet', 'name breed weight age unitAge gender species petImage');
+
+        if (!medicalRecord) {
+            return res.status(404).json({ message: 'Expediente médico no encontrado para esa mascota.' });
+        }
+
+        res.status(200).json({ message: 'Expediente médico recuperado con éxito!', medicalRecord });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener el expediente médico!', error: error.message });
+    }
+};
+
+module.exports = { addMedicalRecord, getMedicalRecords, getMedicalRecordsByPetId, getMedicalRecordById };

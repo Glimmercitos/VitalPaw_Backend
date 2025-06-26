@@ -257,12 +257,11 @@ const editVetAppointment = async (req, res) => {
 
         const populatedAppointment = await Appointment.findById(existing._id)
 
-        .populate('owner', 'name email')
+        .populate('owner', 'id role')
         .populate({
             path: 'pet',
-            select: 'name species breed age gender weight unitAge owner',
             populate: { path: 'owner',
-            select: 'name email'
+            select: 'id role'
             }
         });
 

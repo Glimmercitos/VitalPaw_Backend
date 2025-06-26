@@ -10,4 +10,6 @@ router.get('/get', verifyFirebaseToken, medicalRecordController.getMedicalRecord
 
 router.get('/getPet/:petId', verifyFirebaseToken, medicalRecordController.getMedicalRecordsByPetId);
 
+router.get('/getPet/:petId/:medicalRecordId', verifyFirebaseToken, medicalRecordController.getMedicalRecordById);
+
 module.exports = router;
