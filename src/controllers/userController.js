@@ -106,6 +106,37 @@ const changeUserRole = async (req, res) => {
   }
 };
 
+const updateUserVitalCoin = async (req, res) => {  
+  try {
+    const { id } = req.params;  // id del usuario a modificar
+    const { vitalCoins } = req.body;  // cantidad a agregar
+
+    // Solo admin puede cambiar roles
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Acceso denegado. Solo administradores pueden agregar VitalCoins.' });
+    }
+
+    if (typeof vitalCoins !== 'number' || vitalCoins <= 0) {
+      return res.status(400).json({ message: 'Cantidad inválida. Debe ser un número positivo.' });
+    }
+    
+    // Incrementar VitalCoins
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { $inc: { vitalCoins: vitalCoins } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    res.status(200).json({ message: 'VitalCoins agregados correctamente.', user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al agregar VitalCoins', error: error.message });
+  }
+};
+
 const getUser = async (req, res) => {
   try {
     const idToken = req.headers.authorization?.split('Bearer ')[1];
@@ -124,4 +155,4 @@ const getUser = async (req, res) => {
   }
 };
 
-module.exports = { register, login, changeUserRole, getUser, createAdminIfNotExist };
+module.exports = { register, login, changeUserRole, getUser, createAdminIfNotExist, updateUserVitalCoin };
