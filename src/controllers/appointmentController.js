@@ -298,6 +298,74 @@ const getAppointmentById = async (req, res) => {
   }
 };
 
+const getAppointmentsForClient = async (req, res) => {
+    try {
+        // Verificar autenticación
+        const idToken = req.headers.authorization?.split('Bearer ')[1];
+        if (!idToken) return res.status(401).json({ message: 'Valor de autenticación ausente' });
+
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const firebaseUid = decoded.uid;
+
+        // Buscar al usuario autenticado
+        const user = await User.findOne({ firebaseUid });
+        if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+
+        if (user.role !== 'cliente') {
+            return res.status(403).json({ message: "Acceso denegado. Solo los clientes pueden acceder a sus citas." });
+        }
+
+        // Buscar citas asociadas al cliente autenticado
+        const appointments = await Appointment.find({ owner: user._id })
+            .populate('owner', 'name email') // 🔽 esto incluye los datos del usuario
+            .populate('pet', 'name species breed age unitAge gender weight petImage')
+            .sort({ date: 1, time: 1 });
+
+        res.status(200).json(
+            appointments
+        );
+
+    } catch (error) {
+        console.error("Error al obtener citas del cliente:", error);
+        res.status(500).json({ message: 'Error al obtener las citas.', error: error.message });
+    }
+};
+
+const deleteClientAppointment = async (req, res) => {
+    try {
+        // Verificar autenticación
+        const idToken = req.headers.authorization?.split('Bearer ')[1];
+        if (!idToken) return res.status(401).json({ message: 'Valor de autenticación ausente' });
+
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const firebaseUid = decoded.uid;
+
+        // Buscar al usuario autenticado
+        const user = await User.findOne({ firebaseUid });
+        if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+
+        if (user.role !== 'cliente') {
+            return res.status(403).json({ message: "Acceso denegado. Solo los clientes pueden eliminar sus citas." });
+        }
+
+        const { id } = req.params;
+
+        // Verificar que la cita le pertenezca al usuario
+        const appointment = await Appointment.findOne({ _id: id, owner: user._id });
+        if (!appointment) {
+            return res.status(404).json({ message: "Cita no encontrada o no te pertenece." });
+        }
+
+        await Appointment.findByIdAndDelete(id);
+
+        res.status(200).json({ message: "Cita eliminada correctamente." });
+
+    } catch (error) {
+        console.error("Error al eliminar la cita del cliente:", error);
+        res.status(500).json({ message: "Error al eliminar la cita.", error: error.message });
+    }
+};
+
 module.exports = {
     createAppointmentByClient,
     getAppointments,
@@ -307,5 +375,7 @@ module.exports = {
     deleteVetAppointmentById,
     editVetAppointment,
     getAppointmentById,
+    getAppointmentsForClient,
+    deleteClientAppointment
 };
 

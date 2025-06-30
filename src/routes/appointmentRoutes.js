@@ -9,7 +9,8 @@ router.post('/create', verifyFirebaseToken, appointmentController.createAppointm
 router.get('/all', verifyFirebaseToken, appointmentController.getAppointments);
 router.delete('/delete/:id', verifyFirebaseToken, appointmentController.deleteAppointment);
 router.get('/user/:userId', verifyFirebaseToken, appointmentController.getAppointmentsByUserId);
-
+router.get('/my-appointments', appointmentController.getAppointmentsForClient);
+router.delete('/client/delete/:id', appointmentController.deleteClientAppointment);
 router.get('/vet', verifyFirebaseToken, appointmentController.getAppointmentsForVet);
 router.get('/vet/:id', verifyFirebaseToken, appointmentController.getAppointmentById)
 router.delete('/vet/delete/:id', verifyFirebaseToken, appointmentController.deleteVetAppointmentById);
