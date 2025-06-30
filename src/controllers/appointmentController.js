@@ -4,72 +4,87 @@ const User = require('../models/User');
 const admin = require('../config/firebaseAdmin'); 
 
 
-//Crear una cita como cliente
+// Crear una cita como cliente
 const createAppointmentByClient = async (req, res) => {
     try {
-        // Verificar autenticacion
+        // Verificar autenticación
         const idToken = req.headers.authorization?.split('Bearer ')[1];
-        if (!idToken) return res.status(401).json({ message: 'Valor de autenticación ausente' });
+        if (!idToken) {
+            return res.status(401).json({ message: 'Valor de autenticación ausente' });
+        }
 
         const decoded = await admin.auth().verifyIdToken(idToken);
         const firebaseUid = decoded.uid;
 
-        // Buscar al usuario
+        // Buscar al usuario autenticado
         const user = await User.findOne({ firebaseUid });
-        if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+        if (!user) {
+            return res.status(404).json({ message: "Usuario no encontrado." });
+        }
 
         if (user.role !== 'cliente') {
             return res.status(403).json({ message: "Acceso denegado. Solo los clientes pueden crear citas." });
         }
 
-        // Validar pet
+        // Extraer y validar los datos del cuerpo
         const { service, description, date, time, petId } = req.body;
 
         if (!service || !description || !date || !time || !petId) {
             return res.status(400).json({ message: "Faltan datos para crear la cita." });
         }
 
+        // Verificar que la mascota pertenezca al usuario
         const pet = await Pet.findOne({ _id: petId, owner: user._id });
         if (!pet) {
             return res.status(404).json({ message: "La mascota no existe o no te pertenece." });
         }
 
-        // Buscar un veterinario con poca carga
+        // Obtener veterinarios disponibles
         const veterinarians = await User.find({ role: 'veterinario' });
         if (veterinarians.length === 0) {
             return res.status(400).json({ message: "No hay veterinarios disponibles para asignar la cita." });
         }
 
+        // Calcular la carga de citas por veterinario
         const appointmentCounts = await Appointment.aggregate([
             { $match: { veterinarian: { $in: veterinarians.map(vet => vet._id) } } },
             { $group: { _id: "$veterinarian", count: { $sum: 1 } } }
         ]);
 
         const vetAssignmentMap = new Map();
-
         veterinarians.forEach(vet => {
             const vetCount = appointmentCounts.find(ac => String(ac._id) === String(vet._id))?.count || 0;
             vetAssignmentMap.set(vet._id, vetCount);
         });
 
-        const selectedVet = [...vetAssignmentMap.entries()].sort((a, b) => a[1] - b[1])[0][0 ];
+        // Seleccionar veterinario con menos citas
+        const selectedVet = [...vetAssignmentMap.entries()].sort((a, b) => a[1] - b[1])[0][0];
 
-        //Crear la cita
+        // Crear y guardar la cita
         const appointment = new Appointment({ 
             owner: user._id,
             pet: pet._id,
-            service,
             petName: pet.name,
+            service,
             description,
             date,
             time,
-            veterinarian: selectedVet,
+            veterinarian: selectedVet
         });
 
         await appointment.save();
 
-        res.status(201).json({ message: "Cita creada correctamente.", appointment });
+        // Populate antes de enviar al cliente (muy importante)
+        const populatedAppointment = await Appointment.findById(appointment._id)
+            .populate('owner', 'name email')
+            .populate('pet', 'name species')
+        res.status(201).json({
+            message: "Cita creada correctamente.",
+            appointment: populatedAppointment
+        });
+
     } catch (error) {
+        console.error("Error al crear la cita:", error);
         res.status(500).json({ message: 'Error al crear la cita!', error: error.message });
     }
 };
