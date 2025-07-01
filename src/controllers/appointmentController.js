@@ -164,7 +164,7 @@ const getAppointmentsForVet = async (req, res) => {
 
         const appointments = await Appointment.find({ veterinarian: user._id })
             .populate('owner', 'name email')
-            .populate('pet', 'name species')
+            .populate('pet', 'name species imageUrl')
             .sort({ date: 1, time: 1 });
 
         res.status(200).json({ message: "Citas obtenidas correctamente.", appointments });
@@ -318,7 +318,7 @@ const getAppointmentsForClient = async (req, res) => {
         // Buscar citas asociadas al cliente autenticado
         const appointments = await Appointment.find({ owner: user._id })
             .populate('owner', 'name email') // 🔽 esto incluye los datos del usuario
-            .populate('pet', 'name species breed age unitAge gender weight petImage')
+            .populate('pet', 'name species breed age unitAge gender weight imageUrl')
             .sort({ date: 1, time: 1 });
 
         res.status(200).json(
