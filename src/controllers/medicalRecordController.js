@@ -105,10 +105,10 @@ const getMedicalRecordsByPetId = async (req, res) => {
         const medicalRecords = await MedicalRecord.find({ pet: petId })
             .populate({
                 path: 'pet',
-                populate: {
-                    path: 'owner',
-                    select: 'id role'
-                }
+                // populate: {
+                //     path: 'owner',
+                //     select: 'id role'
+                // }
             })
             .sort({ date: -1 });
 
