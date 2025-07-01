@@ -11,7 +11,24 @@ const getCatalog = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener los productos' });
   }
 };
+const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+
+    res.json(product);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener el producto' });
+  }
+};
+
+// Supongamos que el esquema User tiene cart: [{ productId: ObjectId, quantity: Number }]
 const getCart = async (req, res) => {
   try {
     const idToken = req.headers.authorization?.split('Bearer ')[1];
@@ -19,27 +36,27 @@ const getCart = async (req, res) => {
     
     const decoded = await admin.auth().verifyIdToken(idToken);
     const firebaseUid = decoded.uid;
-    
+
+    // Buscar usuario y popular los productos dentro del carrito
     const user = await User.findOne({ firebaseUid }).populate('cart.productId');
+
     if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
 
-    res.json({
-      vitalCoins: user.vitalCoins,
-      cart: user.cart.map(item => ({
-        _id: item._id,
-        productId: item.productId._id,
-        name: item.productId.name,
-        image: item.productId.image,
-        priceInVitalCoins: item.productId.priceInVitalCoins,
-        quantity: item.quantity,
-        subtotal: item.quantity * item.productId.priceInVitalCoins
-      }))
-    });
+    // Mapear carrito con datos completos de producto
+    const cart = user.cart.map(item => ({
+      _id: item._id,
+      product: item.productId,  // ya populated
+      quantity: item.quantity,
+      subtotal: item.quantity * item.productId.priceInVitalCoins
+    }));
+
+    res.json({ vitalCoins: user.vitalCoins, cart });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al obtener el carrito' });
   }
 };
+
 
 const addToCart = async (req, res) => {
   const { productId, quantity } = req.body;
@@ -154,6 +171,7 @@ const updateCartItem = async (req, res) => {
 
 module.exports = {
   getCatalog,
+  getProductById,
   getCart,
   addToCart,
   removeFromCart,
