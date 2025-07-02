@@ -100,7 +100,7 @@ const changeUserRole = async (req, res) => {
       return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
 
-    res.status(200).json({ message: 'Rol actualizado correctamente.', user: updatedUser });
+    res.status(200).json(updatedUser );
   } catch (error) {
     res.status(500).json({ message: 'Error al cambiar el rol del usuario', error: error.message });
   }
@@ -155,4 +155,21 @@ const getUser = async (req, res) => {
   }
 };
 
-module.exports = { register, login, changeUserRole, getUser, createAdminIfNotExist, updateUserVitalCoin };
+const searchClients = async (req, res) => {
+  try {
+    const query = req.query.email?.toLowerCase() || '';
+    if (!query) return res.status(400).json({ message: 'Debe proporcionar un correo para buscar' });
+
+    const users = await User.find({
+      email: { $regex: query, $options: 'i' },
+      role: 'cliente',
+    });
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Error buscando clientes:', error);
+    res.status(500).json({ message: 'Error interno al buscar clientes' });
+  }
+};
+
+module.exports = { register, login, changeUserRole, getUser, createAdminIfNotExist, updateUserVitalCoin, searchClients };
