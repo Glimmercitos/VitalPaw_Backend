@@ -273,12 +273,7 @@ const editVetAppointment = async (req, res) => {
         const populatedAppointment = await Appointment.findById(existing._id)
 
         .populate('owner', 'id role')
-        .populate({
-            path: 'pet',
-            populate: { path: 'owner',
-            select: 'id role'
-            }
-        });
+         .populate('pet', 'name species');;
 
         res.status(200).json({ message: "Cita actualizada correctamente.", appointment: populatedAppointment });
     } catch (error) {
@@ -290,7 +285,7 @@ const getAppointmentById = async (req, res) => {
     const { id } = req.params;
     const appointment = await Appointment.findById(id)
       .populate('owner', 'name email')
-      .populate('pet', 'name species breed age unitAge gender weight petImage');
+      .populate('pet', 'name species breed age unitAge gender weight imageUrl');
     if (!appointment) return res.status(404).json({ message: 'Cita no encontrada' });
     res.status(200).json(appointment);
   } catch (error) {
