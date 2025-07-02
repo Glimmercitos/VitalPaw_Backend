@@ -1,5 +1,6 @@
 const User = require('../models/User'); 
 const admin = require('../config/firebaseAdmin');
+const { get } = require('mongoose');
 
 async function createAdminIfNotExist() {
   try {
@@ -172,4 +173,66 @@ const searchClients = async (req, res) => {
   }
 };
 
-module.exports = { register, login, changeUserRole, getUser, createAdminIfNotExist, updateUserVitalCoin, searchClients };
+const getVeterinarians = async (req, res) => {
+  try {
+    // 1. Obtener token de encabezado
+    const idToken = req.headers.authorization?.split('Bearer ')[1];
+    if (!idToken) {
+      return res.status(401).json({ message: 'Token no proporcionado' });
+    }
+
+    // 2. Verificar token con Firebase
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const firebaseUid = decodedToken.uid;
+
+    // 3. Buscar usuario en la base de datos
+    const user = await User.findOne({ firebaseUid });
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // 4. Verificar que sea admin
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: 'Acceso denegado. Solo administradores pueden ver esta información.' });
+    }
+
+    // 5. Obtener veterinarios
+    const veterinarians = await User.find({ role: 'veterinario' });
+    res.status(200).json(veterinarians);
+
+  } catch (error) {
+    console.error('Error en getVeterinarians:', error);
+    res.status(500).json({ message: 'Error interno al obtener veterinarios' });
+  }
+};
+
+const getUserById = async (req, res) => {
+  try {
+    const idToken = req.headers.authorization?.split('Bearer ')[1];
+    if (!idToken) return res.status(401).json({ message: 'Token no proporcionado' });
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const firebaseUid = decoded.uid;
+
+    // Buscamos el usuario que hace la petición para validar permisos si quieres:
+    const requestingUser = await User.findOne({ firebaseUid });
+    if (!requestingUser) return res.status(404).json({ message: 'Usuario solicitante no encontrado' });
+
+    // Si quieres, puedes permitir que sólo admin o veterinarios puedan ver otros usuarios
+    if (requestingUser.role !== 'admin' && requestingUser.role !== 'veterinario') {
+      return res.status(403).json({ message: 'Acceso denegado.' });
+    }
+
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error obteniendo usuario por ID:', error);
+    res.status(500).json({ message: 'Error interno al obtener usuario' });
+  }
+};
+
+
+module.exports = { register, login, changeUserRole, getUser, createAdminIfNotExist, updateUserVitalCoin, searchClients, getVeterinarians, getUserById };
