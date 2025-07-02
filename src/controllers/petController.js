@@ -3,6 +3,8 @@ const User = require("../models/User");
 const admin = require("../config/firebaseAdmin");
 const fs = require("fs");
 const cloudinary = require("../config/cloudinary");
+const MedicalRecord = require("../models/MedicalRecord");
+const Appointment = require("../models/Appointment");
 
 const getAllPets = async (req, res) => {
     try {
@@ -135,7 +137,11 @@ const deletePet = async (req, res) => {
             await cloudinary.uploader.destroy(pet.imagePublicId);
         }
 
-        await Pet.findByIdAndDelete(req.params.id);
+        await Appointment.deleteMany({ pet: pet._id} );
+
+        await MedicalRecord.deleteMany({ pet: pet._id} );
+
+        await Pet.findByIdAndDelete({ pet: pet._id} );
 
         res.status(200).json({ message: "Mascota eliminada correctamente." });
     } catch (error) {
@@ -169,7 +175,11 @@ const deleteUserPet = async (req, res) => {
             await cloudinary.uploader.destroy(pet.imagePublicId);
         }
 
-        await Pet.findByIdAndDelete(req.params.id);
+        await Appointment.deleteMany({ pet: pet._id} );
+
+        await MedicalRecord.deleteMany({ pet: pet._id} );
+
+        await Pet.findByIdAndDelete({ pet: pet._id} );
 
         res.status(200).json({ message: "Mascota eliminada correctamente." });
     } catch (error) {
