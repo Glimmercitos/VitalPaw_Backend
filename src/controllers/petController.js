@@ -137,11 +137,11 @@ const deletePet = async (req, res) => {
             await cloudinary.uploader.destroy(pet.imagePublicId);
         }
 
-        await Appointment.deleteMany({ pet: pet._id} );
+        await Appointment.deleteMany({ pet: req.params.id });
 
-        await MedicalRecord.deleteMany({ pet: pet._id} );
+        await MedicalRecord.deleteMany({ pet: req.params.id } );
 
-        await Pet.findByIdAndDelete({ pet: pet._id} );
+        await Pet.findByIdAndDelete(req.params.id);
 
         res.status(200).json({ message: "Mascota eliminada correctamente." });
     } catch (error) {
@@ -175,11 +175,11 @@ const deleteUserPet = async (req, res) => {
             await cloudinary.uploader.destroy(pet.imagePublicId);
         }
 
-        await Appointment.deleteMany({ pet: pet._id} );
+        await Appointment.deleteMany({ pet: req.params.id });
 
-        await MedicalRecord.deleteMany({ pet: pet._id} );
+        await MedicalRecord.deleteMany({ pet: req.params.id } );
 
-        await Pet.findByIdAndDelete({ pet: pet._id} );
+        await Pet.findByIdAndDelete(req.params.id);
 
         res.status(200).json({ message: "Mascota eliminada correctamente." });
     } catch (error) {
