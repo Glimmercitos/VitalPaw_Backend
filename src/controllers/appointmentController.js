@@ -106,7 +106,7 @@ const getAppointments = async (req, res) => {
             return res.status(403).json({ message: "Acceso denegado. Sólo el administrador puede acceder." });
         }
 
-        const appointments = await Appointment.find().populate('owner', 'name email').populate('pet', 'name species');
+        const appointments = await Appointment.find().populate('owner', 'name email').populate('pet', 'name species imageUrl');
         res.status(200).json(appointments);
     } catch (error) {
         res.status(500).json({ message: 'Error al obtener las citas!', error: error.message });

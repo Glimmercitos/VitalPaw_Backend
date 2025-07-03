@@ -1,4 +1,5 @@
 const User = require('../models/User'); 
+const Appointment = require('../models/Appointment');
 const admin = require('../config/firebaseAdmin');
 const { get } = require('mongoose');
 
@@ -89,20 +90,55 @@ const changeUserRole = async (req, res) => {
   if (!allowedRoles.includes(role)) {
     return res.status(400).json({ message: 'Rol inválido.' });
   }
-
+  
   try {
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      { role },
-      { new: true }
-    );
-
-    if (!updatedUser) {
+    const userToUpdate = await User.findById(id);
+    if (!userToUpdate) {
       return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
 
-    res.status(200).json(updatedUser );
-  } catch (error) {
+    const originalRole = userToUpdate.role;
+    userToUpdate.role = role;
+    await userToUpdate.save();
+
+    //Si era veterinario y se convierte en cliente, redistribuir citas
+    if (originalRole === 'veterinario' && role === 'cliente') {
+      const appointments = await Appointment.find({ veterinarian: userToUpdate._id });
+
+      if (appointments.length > 0) {
+        const otherVeterinarians = await User.find({ role: 'veterinario', _id: { $ne: userToUpdate._id } });
+
+        if (otherVeterinarians.length === 0) {
+          return res.status(400).json({ message: 'No hay otros veterinarios disponibles para reasignar las citas.' });
+        }
+
+        // Calcular carga de trabajo actual
+        const appointmentCounts = await Appointment.aggregate([
+          { $match: { veterinarian: { $in: otherVeterinarians.map(vet => vet._id) } } },
+          { $group: { _id: "$veterinarian", count: { $sum: 1 } } }
+        ]);
+
+        const vetAssignmentMap = new Map();
+        otherVeterinarians.forEach(vet => {
+          const vetCount = appointmentCounts.find(ac => String(ac._id) === String(vet._id))?.count || 0;
+          vetAssignmentMap.set(vet._id.toString(), vetCount);
+        });
+
+        // Reasignar cada cita
+        for (const appointment of appointments) {
+          // Obtener veterinario con menor carga
+          const selectedVet = [...vetAssignmentMap.entries()].sort((a, b) => a[1] - b[1])[0][0];
+          appointment.veterinarian = selectedVet;
+          await appointment.save();
+
+          // Aumentar carga
+          vetAssignmentMap.set(selectedVet, vetAssignmentMap.get(selectedVet) + 1);
+        }
+      }
+    }
+
+    res.status(200).json( userToUpdate );
+  }catch (error) {
     res.status(500).json({ message: 'Error al cambiar el rol del usuario', error: error.message });
   }
 };
