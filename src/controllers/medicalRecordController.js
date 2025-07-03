@@ -48,7 +48,7 @@ const addMedicalRecord = async (req, res) => {
         await medicalRecord.save();
 
         const populatedMedicalRecord = await MedicalRecord.findById(medicalRecord._id)
-            .populate('pet', 'name breed weight age unitAge gender species petImage'); 
+            .populate('pet', 'name breed weight age unitAge gender species imageUrl'); 
 
 
         res.status(201).json({ message: 'Registro médico agregado correctamente!', medicalRecord: populatedMedicalRecord });
@@ -75,7 +75,7 @@ const getMedicalRecords = async (req, res) => {
 
         // Recuperar los expedientes
         const medicalRecords = await MedicalRecord.find()
-            .populate('pet', 'name breed weight age unitAge gender species petImage') 
+            .populate('pet', 'name breed weight age unitAge gender species imageUrl') 
             .sort({ date: -1 }); 
 
 
@@ -136,7 +136,7 @@ const getMedicalRecordById = async (req, res) => {
         const { petId, medicalRecordId } = req.params;
 
         const medicalRecord = await MedicalRecord.findOne({ _id: medicalRecordId, pet: petId })
-            .populate('pet', 'name breed weight age unitAge gender species petImage');
+            .populate('pet', 'name breed weight age unitAge gender species imageUrl');
 
         if (!medicalRecord) {
             return res.status(404).json({ message: 'Expediente médico no encontrado para esa mascota.' });

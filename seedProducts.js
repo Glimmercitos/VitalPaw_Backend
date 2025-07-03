@@ -34,11 +34,37 @@ const products = [
     description: 'Croquetas nutritivas para perros adultos, con sabor a carne y vegetales.'
   },
   {
+    name: 'Cama Pet Life Para Perros Talla Xl',
+    image: 'https://walmartsv.vtexassets.com/arquivos/ids/671705-1200-900?v=638742273654900000&width=1200&height=900&aspect=true',
+    priceInVitalCoins: 200,
+    description: 'Cama acogedora y resistente para perro, ideal para brindarle descanso y confort diario.'
+  },
+  {
     name: 'Alimento húmedo para gato',
     image: 'https://purina.com.sv/sites/default/files/styles/webp/public/2023-10/Sobre_Felix_Adulto_Pollo_1.png.webp?itok=NTeu7Byf',
     priceInVitalCoins: 40,
     description: 'Comida húmeda rica en proteínas para gatos exigentes.'
+  },
+  {
+    name: 'Champú suave para mascotas',
+    image: 'https://m.media-amazon.com/images/I/71Npnm2RvjL._AC_SL1500_.jpg',
+    priceInVitalCoins: 35,
+    description: 'Champú dermatológicamente probado, ideal para mantener el pelaje limpio y brillante.'
+  },
+  {
+    name: 'Dispensador automático de comida',
+    image: 'https://m.media-amazon.com/images/I/61gueG5uX1L._AC_SL1500_.jpg',
+    priceInVitalCoins: 350,
+    description: 'Alimentador automático con temporizador para una dieta controlada y cómoda.'
+  },
+  {
+    name: 'Juguete mordedor con cuerda',
+    image: 'https://m.media-amazon.com/images/I/61ip1bS58YL.__AC_SX300_SY300_QL70_ML2_.jpg',
+    priceInVitalCoins: 28,
+    description: 'Mordedor resistente con cuerda para mantener a tu perro entretenido y saludable.'
   }
+
+
 ];
 
 async function seedProductsIfNeeded() {
