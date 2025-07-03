@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const User = require('../models/User');
+const RedeemedPurchase = require('../models/redeemPurchase');
 const admin = require('../config/firebaseAdmin');
 
 const getCatalog = async (req, res) => {
@@ -127,6 +128,14 @@ const checkout = async (req, res) => {
     }
 
     user.vitalCoins -= total;
+
+      // Crear registro individual de compra
+    const purchase = new RedeemedPurchase({
+      userId: user._id,
+      points: total
+    });
+    await purchase.save();
+
     user.cart = [];
     await user.save();
 
@@ -168,6 +177,56 @@ const updateCartItem = async (req, res) => {
   }
 };
 
+const getLastRedeemedPurchases = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 5;
+
+    // Obtener últimas compras con usuario poblado (nombre)
+    const purchases = await RedeemedPurchase.find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate('userId', 'name'); // solo traer nombre del usuario
+
+    // Mapear respuesta para frontend: solo nombre y puntos
+    const response = purchases.map(p => ({
+      userName: p.userId.name,
+      points: p.points,
+      date: p.createdAt
+    }));
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error obteniendo últimas compras:', error);
+    res.status(500).json({ message: 'Error interno al obtener últimas compras' });
+  }
+};
+
+const getTotalRedeemedPoints = async (req, res) => {
+  try {
+    // Sumar todos los puntos en la colección RedeemedPurchase
+    const result = await RedeemedPurchase.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalRedeemed: { $sum: "$points" }
+        }
+      }
+    ]);
+
+    const totalRedeemed = (result[0]?.totalRedeemed) || 0;
+    console.log('Total canjeado:', totalRedeemed);
+
+    res.status(200).json({ totalRedeemed });
+  } catch (error) {
+    console.error('Error obteniendo total canjeado:', error);
+    res.status(500).json({ message: 'Error interno al obtener total canjeado' });
+  }
+};
+
+
+
+
+
 
 module.exports = {
   getCatalog,
@@ -176,5 +235,7 @@ module.exports = {
   addToCart,
   removeFromCart,
   checkout,
-  updateCartItem
+  updateCartItem,
+  getLastRedeemedPurchases,
+  getTotalRedeemedPoints
 };

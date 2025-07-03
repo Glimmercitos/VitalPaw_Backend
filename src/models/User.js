@@ -10,7 +10,8 @@ const userSchema = new mongoose.Schema({
     cart: [{
         productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
         quantity: Number
-    }]
+    }],
+    redeemedCoins: { type: Number, default: 0 },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
