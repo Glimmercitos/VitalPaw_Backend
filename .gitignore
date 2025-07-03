@@ -1,0 +1,22 @@
+# Node.js
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Directorios de sistema
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Otros
+*.log
+src/config/vitalpaw-d5213-firebase-adminsdk-fbsvc-5dae68ce0f.json
